@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/date"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="3dp"
+    android:paddingBottom="3dp"
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp"
+    android:layout_marginBottom="6dp"
+    android:background="@color/material_drawer_primary"
+    android:textColor="@color/material_drawer_primary_text"
+    android:textAppearance="?android:attr/textAppearanceMedium"
+/>

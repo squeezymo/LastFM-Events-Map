@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="red_light">#DE1B23</color>
+    <color name="red_dark">#9F081E</color>
+
+    <color name="material_drawer_primary">#DE1B23</color>
+    <color name="material_drawer_primary_dark">#9F081E</color>
+    <color name="material_drawer_primary_light">#DE1B23</color>
+    <color name="material_drawer_accent">#9F081E</color>
+
+    <color name="material_drawer_background">#D0D0D0</color>
+    <color name="material_drawer_icons">#000</color>
+    <color name="material_drawer_primary_text">#FFF</color>
+    <color name="material_drawer_secondary_text">#DEDEDE</color>
+    <color name="material_drawer_hint_text">#ff7d7d7d</color>
+    <color name="material_drawer_contrast_text">#000</color>
+    <color name="material_drawer_divider">#555555</color>
+    <color name="material_drawer_selected">#262626</color>
+</resources>
