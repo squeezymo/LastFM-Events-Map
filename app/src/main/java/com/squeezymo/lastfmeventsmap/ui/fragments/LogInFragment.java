@@ -7,14 +7,13 @@ import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import com.gc.materialdesign.views.ButtonRectangle;
 import com.squeezymo.lastfmeventsmap.R;
 import com.squeezymo.lastfmeventsmap.prefs.Preferences;
-import com.squeezymo.lastfmeventsmap.ui.MainActivity;
+import com.squeezymo.lastfmeventsmap.ui.activities.MainActivity;
 
 import tools.lastfm.LastFmAuthenticator;
 import tools.lastfm.LastFmClient;

@@ -26,7 +26,7 @@ import com.squeezymo.lastfmeventsmap.db.CouchbaseManager;
 import com.squeezymo.lastfmeventsmap.model.LastFmEvent;
 import com.squeezymo.lastfmeventsmap.model.LastFmEventsResponse;
 import com.squeezymo.lastfmeventsmap.model.LastFmImage;
-import com.squeezymo.lastfmeventsmap.prefs.Global;
+import com.squeezymo.lastfmeventsmap.prefs.Globals;
 import com.squeezymo.lastfmeventsmap.prefs.Preferences;
 
 import org.apache.http.Header;
@@ -156,19 +156,19 @@ public class LastFmClient {
                             prefEditor.putString(Preferences.SESSION_PREF, Obfuscator.encode(sessionKey));
                             prefEditor.commit();
 
-                            mContext.sendBroadcast(new Intent(Global.LOG_IN_SUCCESS));
+                            mContext.sendBroadcast(new Intent(Globals.LOG_IN_SUCCESS));
                         }
                     }
 
                     @Override
                     public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
                         if (mContext != null) {
-                            Intent response = new Intent(Global.LOG_IN_FAILURE);
+                            Intent response = new Intent(Globals.LOG_IN_FAILURE);
 
                             Document doc = Jsoup.parse(new String(responseBody));
                             Elements elems = doc.getElementsByTag("error");
                             if (elems.size() > 0) {
-                                response.putExtra(Global.EXTRA_ERR, Integer.parseInt(elems.first().attr("code")));
+                                response.putExtra(Globals.EXTRA_ERR, Integer.parseInt(elems.first().attr("code")));
                             }
 
                             mContext.sendBroadcast(response);
@@ -261,7 +261,7 @@ RESPONSE RECEIVED:
                                 }
 
                                 if (mContext != null && events != null) {
-                                    mContext.sendBroadcast(new Intent(Global.EVENTS_UPDATED));
+                                    mContext.sendBroadcast(new Intent(Globals.EVENTS_UPDATED));
                                 }
 
                                 Looper.loop();
@@ -271,6 +271,25 @@ RESPONSE RECEIVED:
 
                     @Override
                     public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                        /*
+                        05-18 00:16:18.543    7916-8176/com.squeezymo.lastfmeventsmap W/System.err﹕ org.apache.http.conn.ConnectTimeoutException: Connect to /195.24.233.55:443 timed out
+05-18 00:16:18.544    7916-8176/com.squeezymo.lastfmeventsmap W/System.err﹕ at org.apache.http.conn.scheme.PlainSocketFactory.connectSocket(PlainSocketFactory.java:121)
+05-18 00:16:18.544    7916-8176/com.squeezymo.lastfmeventsmap W/System.err﹕ at org.apache.http.impl.conn.DefaultClientConnectionOperator.openConnection(DefaultClientConnectionOperator.java:144)
+05-18 00:16:18.544    7916-8176/com.squeezymo.lastfmeventsmap W/System.err﹕ at org.apache.http.impl.conn.AbstractPoolEntry.open(AbstractPoolEntry.java:164)
+05-18 00:16:18.544    7916-8176/com.squeezymo.lastfmeventsmap W/System.err﹕ at org.apache.http.impl.conn.AbstractPooledConnAdapter.open(AbstractPooledConnAdapter.java:119)
+05-18 00:16:18.544    7916-8176/com.squeezymo.lastfmeventsmap W/System.err﹕ at org.apache.http.impl.client.DefaultRequestDirector.execute(DefaultRequestDirector.java:360)
+05-18 00:16:18.544    7916-8176/com.squeezymo.lastfmeventsmap W/System.err﹕ at org.apache.http.impl.client.AbstractHttpClient.execute(AbstractHttpClient.java:555)
+05-18 00:16:18.544    7916-8176/com.squeezymo.lastfmeventsmap W/System.err﹕ at org.apache.http.impl.client.AbstractHttpClient.execute(AbstractHttpClient.java:487)
+05-18 00:16:18.545    7916-8176/com.squeezymo.lastfmeventsmap W/System.err﹕ at com.loopj.android.http.AsyncHttpRequest.makeRequest(AsyncHttpRequest.java:98)
+05-18 00:16:18.545    7916-8176/com.squeezymo.lastfmeventsmap W/System.err﹕ at com.loopj.android.http.AsyncHttpRequest.makeRequestWithRetries(AsyncHttpRequest.java:112)
+05-18 00:16:18.545    7916-8176/com.squeezymo.lastfmeventsmap W/System.err﹕ at com.loopj.android.http.AsyncHttpRequest.run(AsyncHttpRequest.java:68)
+05-18 00:16:18.545    7916-8176/com.squeezymo.lastfmeventsmap W/System.err﹕ at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:422)
+05-18 00:16:18.545    7916-8176/com.squeezymo.lastfmeventsmap W/System.err﹕ at java.util.concurrent.FutureTask.run(FutureTask.java:237)
+05-18 00:16:18.545    7916-8176/com.squeezymo.lastfmeventsmap W/System.err﹕ at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1112)
+05-18 00:16:18.545    7916-8176/com.squeezymo.lastfmeventsmap W/System.err﹕ at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:587)
+05-18 00:16:18.545    7916-8176/com.squeezymo.lastfmeventsmap W/System.err﹕ at java.lang.Thread.run(Thread.java:818)
+05-18 00:16:18.559    7916-7916/com.squeezymo.lastfmeventsmap D/tools.lastfm.LastFmClient﹕ FAILURE: 0
+                         */
                         Log.d(LOG_TAG, "FAILURE: " + statusCode);
                     }
                 }
@@ -302,7 +321,7 @@ RESPONSE RECEIVED:
                                     CouchbaseManager.addImageAttachment(event, image, responseBody);
 
                                     if (callbackHandler != null) {
-                                        Message.obtain(callbackHandler, Global.IMAGE_DOWNLOADED, event).sendToTarget();
+                                        Message.obtain(callbackHandler, Globals.IMAGE_DOWNLOADED, event).sendToTarget();
                                     }
                                 } catch (CouchbaseLiteException e) {
                                     e.printStackTrace();

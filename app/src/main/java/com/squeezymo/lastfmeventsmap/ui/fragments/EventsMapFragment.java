@@ -3,7 +3,6 @@ package com.squeezymo.lastfmeventsmap.ui.fragments;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -19,21 +18,17 @@ import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.maps.android.MarkerManager;
 import com.google.maps.android.clustering.Cluster;
-import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
-import com.google.maps.android.clustering.view.DefaultClusterRenderer;
 import com.squeezymo.lastfmeventsmap.R;
 import com.squeezymo.lastfmeventsmap.db.CouchbaseManager;
 import com.squeezymo.lastfmeventsmap.model.LastFmEvent;
 import com.squeezymo.lastfmeventsmap.model.LastFmImage;
-import com.squeezymo.lastfmeventsmap.prefs.Global;
+import com.squeezymo.lastfmeventsmap.model.LastFmVenue;
+import com.squeezymo.lastfmeventsmap.prefs.Globals;
 import com.squeezymo.lastfmeventsmap.ui.rendering.EventClusterItem;
 import com.squeezymo.lastfmeventsmap.ui.rendering.EventClusterRenderer;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,15 +55,21 @@ public class EventsMapFragment extends MapFragment {
 
     public void initialize(GoogleApiClient googleApiClient) {
         /* Handler setting */
-        final Bitmap defaultMarkerImage = BitmapFactory.decodeResource(EventsMapFragment.this.getActivity().getResources(), R.drawable.default_artist_medium);
-
+        final Bitmap defaultMarkerImage = Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(EventsMapFragment.this.getActivity().getResources(), R.drawable.default_artist_medium),
+                LastFmImage.Size.MEDIUM.getWidth(),
+                LastFmImage.Size.MEDIUM.getHeight(),
+                false
+        );
+/*
         mHandler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message inputMessage) {
                 switch (inputMessage.what) {
-                    case Global.IMAGE_DOWNLOADED:
+                    case Globals.IMAGE_DOWNLOADED:
                         final LastFmEvent event = (LastFmEvent) inputMessage.obj;
                         final Marker marker = mMarkerByEventId.get(event.getId());
+
                         if (marker != null) {
                             try {
                                 Bitmap image = CouchbaseManager.retrieveImage(event, LastFmImage.Size.MEDIUM, null);
@@ -77,7 +78,6 @@ public class EventsMapFragment extends MapFragment {
                                     image = defaultMarkerImage;
                                 }
 
-                                image = Bitmap.createScaledBitmap(image, 48, 48, false);
                                 marker.setIcon(BitmapDescriptorFactory.fromBitmap(image));
                             } catch (CouchbaseLiteException e) {
                                 e.printStackTrace();
@@ -88,17 +88,16 @@ public class EventsMapFragment extends MapFragment {
                 }
             }
         };
-
+*/
         /* Clustering setting */
-        mMarkerByEventId = new HashMap<Long, Marker>();
+        mMarkerByEventId = new HashMap<>();
 
-        mClusterManager = new ClusterManager<EventClusterItem>(getActivity().getApplicationContext(), getMap());
+        mClusterManager = new ClusterManager<>(getActivity().getApplicationContext(), getMap());
         mClusterManager.setRenderer(
-                new EventClusterRenderer<EventClusterItem>(
+                new EventClusterRenderer<>(
                     getActivity().getApplicationContext(),
                     getMap(),
                     mClusterManager,
-                    mHandler,
                     defaultMarkerImage
                 )
         );

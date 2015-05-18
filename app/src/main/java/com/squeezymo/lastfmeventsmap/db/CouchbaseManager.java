@@ -27,6 +27,7 @@ import com.squeezymo.lastfmeventsmap.model.LastFmEvent;
 import com.squeezymo.lastfmeventsmap.model.LastFmImage;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -112,7 +113,17 @@ public class CouchbaseManager {
         });
     }
 
-    public static synchronized void addImageAttachment(final LastFmEvent event, final LastFmImage image, final byte[] img) throws CouchbaseLiteException {
+    public static synchronized void addImageAttachment(LastFmEvent event, LastFmImage image, byte[] img) throws CouchbaseLiteException {
+        if (image.getSizeAsObject() != null) {
+            Bitmap bitmap = BitmapFactory.decodeByteArray(img, 0, img.length);
+            bitmap = Bitmap.createScaledBitmap(bitmap, image.getSizeAsObject().getWidth(), image.getSizeAsObject().getHeight(), false);
+
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+
+            img = stream.toByteArray();
+        }
+
         final Document doc = getDocumentByID(event.getId());
         final UnsavedRevision newRev = doc.getCurrentRevision().createRevision();
         newRev.setAttachment(ATTACHMENT_IMAGE + image.getSize(), "image/jpeg", new ByteArrayInputStream(img));
@@ -159,18 +170,11 @@ public class CouchbaseManager {
         return events;
     }
 
-    public static Bitmap retrieveImage(final LastFmEvent event, final LastFmImage.Size size, final Handler callbackHandler) throws CouchbaseLiteException {
+    public static Bitmap retrieveImage(LastFmEvent event, LastFmImage.Size size, Handler callbackHandler) throws CouchbaseLiteException {
         if (event.getImages() == null)
             return null;
 
-        LastFmImage image = null;
-
-        for (LastFmImage currImage : event.getImages()) {
-            if (currImage.getSize().equals(size.getTxt())) {
-                image = currImage;
-                break;
-            }
-        }
+        LastFmImage image = event.getBestFitImage(size, LastFmImage.Filter.MATCH_EXACT);
 
         if (image == null)
             return null;

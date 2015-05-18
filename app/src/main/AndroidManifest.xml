@@ -29,12 +29,17 @@
             android:value="AIzaSyB78Iir9rl_Au5xsVVObxqE8cCm-fNNnsc"/>
 
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".ui.activities.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.activities.EventLookupActivity"
+            android:label="@string/app_name" >
         </activity>
     </application>
 

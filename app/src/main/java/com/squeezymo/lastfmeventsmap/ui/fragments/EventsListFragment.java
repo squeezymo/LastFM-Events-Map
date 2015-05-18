@@ -1,25 +1,15 @@
 package com.squeezymo.lastfmeventsmap.ui.fragments;
 
 import android.app.Fragment;
-import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.couchbase.lite.CouchbaseLiteException;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.Marker;
 import com.squeezymo.lastfmeventsmap.R;
-import com.squeezymo.lastfmeventsmap.db.CouchbaseManager;
 import com.squeezymo.lastfmeventsmap.model.LastFmEvent;
-import com.squeezymo.lastfmeventsmap.model.LastFmImage;
-import com.squeezymo.lastfmeventsmap.prefs.Global;
 import com.squeezymo.lastfmeventsmap.ui.adapters.EventsListAdapter;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
 

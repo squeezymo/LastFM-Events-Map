@@ -1,6 +1,7 @@
 package com.squeezymo.lastfmeventsmap.ui.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -17,6 +18,7 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.ReplacementSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,7 +30,8 @@ import com.squeezymo.lastfmeventsmap.R;
 import com.squeezymo.lastfmeventsmap.db.CouchbaseManager;
 import com.squeezymo.lastfmeventsmap.model.LastFmEvent;
 import com.squeezymo.lastfmeventsmap.model.LastFmImage;
-import com.squeezymo.lastfmeventsmap.prefs.Global;
+import com.squeezymo.lastfmeventsmap.prefs.Globals;
+import com.squeezymo.lastfmeventsmap.ui.activities.EventLookupActivity;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 
 import java.text.ParseException;
@@ -49,13 +52,18 @@ public class EventsListAdapter
     private List<LastFmEvent> mEvents;
     private Handler mHandler;
 
-    /* TAGS BACKGROUND SPAN */
-    public class TagsBackgroundSpan extends ReplacementSpan {
+    /* VIEW TAGS */
+    private enum EventViewTag {
+        ATTENDANCE
+    };
+
+    /* TAG BACKGROUND SPAN */
+    public class TagBackgroundSpan extends ReplacementSpan {
         private final int mPadding = 10;
         private int mBackgroundColor;
         private int mTextColor;
 
-        public TagsBackgroundSpan(int backgroundColor, int textColor) {
+        public TagBackgroundSpan(int backgroundColor, int textColor) {
             super();
             mBackgroundColor = backgroundColor;
             mTextColor = textColor;
@@ -106,7 +114,8 @@ public class EventsListAdapter
     }
 
     /* EVENT VIEW HOLDER */
-    public class EventViewHolder extends RecyclerView.ViewHolder {
+    public class EventViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        private LastFmEvent event;
         private ImageView image;
         private TextView title;
         private TextView artists;
@@ -120,11 +129,18 @@ public class EventsListAdapter
             title = (TextView) v.findViewById(R.id.event_title);
             artists = (TextView) v.findViewById(R.id.event_artists);
             venue = (TextView) v.findViewById(R.id.event_venue);
-            attendance = (TextView) v.findViewById(R.id.event_attendance);
             tags = (TextView) v.findViewById(R.id.event_tags);
+
+            attendance = (TextView) v.findViewById(R.id.event_attendance);
+            attendance.setTag(EventViewTag.ATTENDANCE);
+            attendance.setOnClickListener(this);
+
+            v.setOnClickListener(this);
         }
 
         public void bindItem(LastFmEvent event) {
+            this.event = event;
+
             /* TITLE */
             title.setText(event.getTitle());
 
@@ -133,10 +149,14 @@ public class EventsListAdapter
                 Bitmap bitmap = CouchbaseManager.retrieveImage(event, LastFmImage.Size.LARGE, mHandler);
 
                 if (bitmap == null) {
-                    bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.default_artist_medium);
+                    bitmap = Bitmap.createScaledBitmap(
+                            BitmapFactory.decodeResource(mContext.getResources(), R.drawable.default_artist_medium),
+                            LastFmImage.Size.LARGE.getWidth(),
+                            LastFmImage.Size.LARGE.getHeight(),
+                            false
+                    );
                 }
 
-                bitmap = Bitmap.createScaledBitmap(bitmap, 150, 150, false);
                 image.setImageDrawable(new BitmapDrawable(mContext.getResources(), bitmap));
             } catch (CouchbaseLiteException e) {
                 e.printStackTrace();
@@ -169,29 +189,35 @@ public class EventsListAdapter
 
             /* TAGS */
             SpannableString tagsBuilder = new SpannableString(TextUtils.join(" ", event.getTags().getTags()));
-            ReplacementSpan bgColor = new TagsBackgroundSpan(Color.rgb(1, 135, 197), Color.WHITE);
-
-
-//Log.d(LOG_TAG, "tagsBuilder.length() == " + tagsBuilder.length());
-//            tagsBuilder.setSpan(new TagsBackgoundSpan(Color.rgb(1, 135, 197), Color.WHITE), 0, tagsBuilder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-
 
             int offset = 0;
+
             for (String tag : event.getTags().getTags()) {
-                tagsBuilder.setSpan(new TagsBackgroundSpan(Color.rgb(1, 135, 197), Color.WHITE), offset, offset+tag.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                ReplacementSpan bgColor = new TagBackgroundSpan(Color.rgb(1, 135, 197), Color.WHITE);
+                tagsBuilder.setSpan(bgColor, offset, offset+tag.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 offset += tag.length() + 1;
             }
 
-            //tagsBuilder.setSpan(bgColor, 0, 0, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-           // if (tagsText.length() > 0) {
-           //     BackgroundColorSpan bgColor = new TagsBackgoundSpan();
-                //BackgroundColorSpan bgColor = new BackgroundColorSpan(Color.rgb(1, 135, 197));
-          //      //tagsText.setSpan(bgColor, 0, tagsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            //}
-
-
-            //tags.setText(tagsText);
             tags.setText(tagsBuilder, TextView.BufferType.SPANNABLE);
+        }
+
+        @Override
+        public void onClick(View view) {
+            Object tagObj = view.getTag();
+
+            if (tagObj == null || !(tagObj instanceof EventViewTag)) {
+                Intent intent = new Intent(mContext, EventLookupActivity.class);
+                intent.putExtra(EventLookupActivity.EXTRA_EVENT, event);
+                mContext.startActivity(intent);
+            }
+            else {
+                EventViewTag tag = (EventViewTag) tagObj;
+                switch (tag) {
+                    case ATTENDANCE:
+                        Log.d(LOG_TAG, "Clicked: attendance");
+                        break;
+                }
+            }
         }
     }
 
@@ -203,7 +229,7 @@ public class EventsListAdapter
             @Override
             public void handleMessage(Message inputMessage) {
                 switch (inputMessage.what) {
-                    case Global.IMAGE_DOWNLOADED:
+                    case Globals.IMAGE_DOWNLOADED:
                         notifyEventChanged((LastFmEvent) inputMessage.obj);
                         break;
                 }

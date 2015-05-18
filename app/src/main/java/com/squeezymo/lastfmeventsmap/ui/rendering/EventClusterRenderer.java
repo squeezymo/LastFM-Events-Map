@@ -48,6 +48,7 @@ import com.squeezymo.lastfmeventsmap.db.CouchbaseManager;
 import com.squeezymo.lastfmeventsmap.model.LastFmEvent;
 import com.squeezymo.lastfmeventsmap.model.LastFmImage;
 import com.squeezymo.lastfmeventsmap.model.LastFmVenue;
+import com.squeezymo.lastfmeventsmap.prefs.Globals;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -73,6 +74,7 @@ public class EventClusterRenderer<T extends ClusterItem> implements ClusterRende
     private final ClusterManager<T> mClusterManager;
     private final float mDensity;
     private Handler mHandler;
+    private Map<Long, Marker> mMarkerByEventId;
 
     private static final int[] BUCKETS = {10, 20, 50, 100, 200, 500, 1000};
     private ShapeDrawable mColoredCircleBackground;
@@ -124,7 +126,7 @@ public class EventClusterRenderer<T extends ClusterItem> implements ClusterRende
 
     private Bitmap mDefaultMarkerImage;
 
-    public EventClusterRenderer(Context context, GoogleMap map, ClusterManager<T> clusterManager, Handler callbackHandler, Bitmap defaultMarkerImage) {
+    public EventClusterRenderer(final Context context, GoogleMap map, ClusterManager<T> clusterManager, Bitmap defaultMarkerImage) {
         mMap = map;
         mDensity = context.getResources().getDisplayMetrics().density;
 
@@ -139,8 +141,43 @@ public class EventClusterRenderer<T extends ClusterItem> implements ClusterRende
         mIconRectGenerator.setBackground(makeClusterRectangularBackground());
 
         mClusterManager = clusterManager;
-        mHandler = callbackHandler;
         mDefaultMarkerImage = defaultMarkerImage;
+
+        mMarkerByEventId = new HashMap<>();
+
+        mHandler = new Handler(Looper.getMainLooper()) {
+            final Bitmap defaultMarkerImage = Bitmap.createScaledBitmap(
+                    BitmapFactory.decodeResource(context.getResources(), com.squeezymo.lastfmeventsmap.R.drawable.default_artist_medium),
+                    LastFmImage.Size.MEDIUM.getWidth(),
+                    LastFmImage.Size.MEDIUM.getHeight(),
+                    false
+            );
+
+            @Override
+            public void handleMessage(Message inputMessage) {
+                switch (inputMessage.what) {
+                    case Globals.IMAGE_DOWNLOADED:
+                        final LastFmEvent event = (LastFmEvent) inputMessage.obj;
+                        final Marker marker = mMarkerByEventId.get(event.getId());
+
+                        if (marker != null) {
+                            try {
+                                Bitmap image = CouchbaseManager.retrieveImage(event, LastFmImage.Size.MEDIUM, null);
+
+                                if (image == null) {
+                                    image = defaultMarkerImage;
+                                }
+
+                                marker.setIcon(BitmapDescriptorFactory.fromBitmap(image));
+                            } catch (CouchbaseLiteException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        break;
+                }
+            }
+        };
     }
 
     @Override
@@ -807,6 +844,8 @@ public class EventClusterRenderer<T extends ClusterItem> implements ClusterRende
      * Called after the marker for a ClusterItem has been added to the map.
      */
     protected void onClusterItemRendered(T clusterItem, Marker marker) {
+        LastFmEvent event = ((EventClusterItem) clusterItem).getEvent();
+        mMarkerByEventId.put(event.getId(), marker);
     }
 
     /**
